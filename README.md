@@ -1,58 +1,61 @@
 # Ysnblock Shader
 
-A lightweight Minecraft shader pack starter for Iris and OptiFine. The initial pass keeps vanilla lighting intact and adds a restrained color grade, with an intentionally small shader surface for future features.
+A minimal Minecraft terrain shader pack starter targeting **GLSL 4.5+**. It uses a core-profile vertex/fragment pipeline, separates reusable code into guarded GLSL libraries, and applies a subtle warm color grade to terrain.
 
-## Installation
+## Requirements
 
-1. Download the repository as a ZIP (or package the `shaders` directory and `shaders.properties` at the ZIP root).
-2. Place the ZIP in `.minecraft/shaderpacks`.
-3. Select **Ysnblock Shader** in the Minecraft shader settings.
+- A Minecraft shader loader and graphics driver that expose OpenGL 4.5 or newer.
+- A shader-pack core configuration that provides the OptiFine-style attributes and uniforms used here (`vaPosition`, `vaUV0`, `vaColor`, `chunkOffset`, `modelViewMatrix`, `projectionMatrix`, `textureMatrix`, and `gtexture`).
 
-Use Minecraft with [Iris](https://irisshaders.dev/) or OptiFine. Shader pack support can vary across Minecraft and loader versions.
+GLSL 4.5 is an intentional minimum target. Older shader packs in the local reference collection use GLSL 3.30–4.30 and do not validate this version target.
 
-## Current features
+## Install
 
-- Subtle daylight color grading for terrain.
-- Vanilla block and entity rendering paths remain unchanged.
-- Small, readable GLSL files intended as a starting point.
+For a folder install, extract this project into `.minecraft/shaderpacks/Ysnblock Shader/`. The `shaders/` directory must be directly inside that pack folder. To make a shader-pack ZIP, put the contents of this project's `shaders/` directory at the ZIP root; do not include an extra project-directory level.
 
-## Project layout
+## Structure
 
 ```text
-shaders/
-  gbuffers_terrain.vsh
-  gbuffers_terrain.fsh
-shaders.properties
+Ysnblock Shader/                 # Pack shell
+  shaders/                       # Shader root
+    gbuffers_terrain.vsh
+    gbuffers_terrain.fsh
+    shaders.properties
+    libs/
+      Attributes.glsl
+      Settings.glsl
+      Uniforms.glsl
+      Utilities.glsl
 ```
 
-## Development
+The shader pack currently overrides the terrain geometry pass. Other geometry passes continue through the loader's normal fallback path.
 
-Edit the GLSL files, then reload shaders in-game (commonly `F3+R` with Iris). This starter does not bundle game assets or third-party code.
+## Rendering path
+
+The vertex shader transforms chunk-relative terrain positions into view space, then clip space:
+
+```glsl
+gl_Position = projectionMatrix
+            * modelViewMatrix
+            * vec4(vaPosition + chunkOffset, 1.0);
+```
+
+It passes texture coordinates and vertex color to the fragment shader. The fragment shader samples `gtexture`, preserves alpha cutouts, and applies a small warm tint. The color-grade option is declared in `libs/Settings.glsl` and exposed through `shaders.properties`.
+
+## Libraries and options
+
+Reusable declarations and functions live in `shaders/libs/` and use include guards. Shader stages define their context macros before including stage-aware attributes and uniforms. OptiFine's `#include` paths are relative to the shader root and start with `/`.
+
+## 中文说明
+
+这是一个以 **GLSL 4.5 及以上版本**为目标的 Minecraft 基础地形光影包。它使用核心配置下的顶点/片元着色流程，通过分块偏移、模型视口矩阵和投影矩阵完成坐标变换，并为地形纹理添加轻微暖色调。
+
+运行环境需要提供 OpenGL 4.5 或更高版本，并支持本项目使用的 OptiFine 风格输入与 uniform。参考目录中的光影最高主要使用 GLSL 4.3，因此这里只借鉴它们的库组织和渲染流程，不把它们当作 GLSL 4.5 的兼容性验证。
+
+文件夹安装时，将项目解压到 `.minecraft/shaderpacks/Ysnblock Shader/`，确保 `shaders/` 直接位于外壳目录内。制作光影 ZIP 时，将 `shaders/` 文件夹中的内容放到 ZIP 根目录，避免多套一层项目目录。
+
+通用代码放在 `shaders/libs/`，并通过 include guard 防止重复包含。当前只重写地形几何缓冲阶段；其他几何仍由加载器的默认流程处理。色彩调整强度可在光影设置中更改。
 
 ## License
 
 MIT. See [LICENSE](LICENSE).
-
----
-
-# Ysnblock Shader（中文）
-
-这是一个面向 Iris 与 OptiFine 的轻量 Minecraft 着色器包起始项目。当前版本保留原版光照，只为地形加入克制的色彩调整，方便继续扩展。
-
-## 安装
-
-1. 将仓库下载为 ZIP（也可以把 `shaders` 文件夹和 `shaders.properties` 放在 ZIP 根目录后打包）。
-2. 将 ZIP 放入 `.minecraft/shaderpacks`。
-3. 在 Minecraft 的着色器设置中选择 **Ysnblock Shader**。
-
-需要安装 [Iris](https://irisshaders.dev/) 或 OptiFine。不同 Minecraft 与加载器版本的兼容情况可能不同。
-
-## 当前效果
-
-- 为地形添加轻微的日间色彩调整。
-- 方块与实体渲染路径保持原版行为。
-- GLSL 文件尽量精简，便于继续开发。
-
-## 开发
-
-修改 GLSL 文件后，在游戏中重新加载着色器（Iris 通常可使用 `F3+R`）。本项目不包含游戏资源或第三方代码。
