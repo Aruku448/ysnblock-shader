@@ -1,10 +1,17 @@
-#version 120
+#version 450 core
 
-varying vec2 texCoord;
-varying vec4 vertexColor;
+#define TERRAIN_GBUFFER
+#define VERTEX_STAGE
+#include "/libs/Attributes.glsl"
+#include "/libs/Uniforms.glsl"
+
+out vec2 vTexCoord;
+out vec4 vVertexColor;
 
 void main() {
-    gl_Position = ftransform();
-    texCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
-    vertexColor = gl_Color;
+    vec4 viewPosition = modelViewMatrix * vec4(vaPosition + chunkOffset, 1.0);
+    gl_Position = projectionMatrix * viewPosition;
+
+    vTexCoord = (textureMatrix * vec4(vaUV0, 0.0, 1.0)).xy;
+    vVertexColor = vaColor;
 }
