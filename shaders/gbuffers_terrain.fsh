@@ -1,15 +1,19 @@
-#version 120
+#version 450 core
 
-uniform sampler2D texture;
+#define TERRAIN_GBUFFER
+#define FRAGMENT_STAGE
+#include "/libs/Uniforms.glsl"
+#include "/libs/Settings.glsl"
+#include "/libs/Utilities.glsl"
 
-varying vec2 texCoord;
-varying vec4 vertexColor;
+in vec2 vTexCoord;
+in vec4 vVertexColor;
+
+layout(location = 0) out vec4 fragColor;
 
 void main() {
-    vec4 color = texture2D(texture, texCoord) * vertexColor;
+    vec4 color = texture(gtexture, vTexCoord) * vVertexColor;
     if (color.a < 0.1) discard;
 
-    // A restrained warm grade that preserves the vanilla texture palette.
-    vec3 graded = color.rgb * vec3(1.025, 1.010, 0.985);
-    gl_FragData[0] = vec4(graded, color.a);
+    fragColor = vec4(ysnApplyColorGrade(color.rgb), color.a);
 }
